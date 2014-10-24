@@ -111,6 +111,9 @@ class WebRoot(object):
     # Retrieve a voicemail
     @cherrypy.expose
     def voicemail(self, vm):
+        if debug:
+            for header in cherrypy.request.headers.keys():
+                log("phone", header, ":", cherrypy.request.headers[header])
         vmFile = open(filePath+vm)
         vMsg = vmFile.read()
         vmFile.close()
