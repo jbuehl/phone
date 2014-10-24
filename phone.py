@@ -111,15 +111,14 @@ class WebRoot(object):
     # Retrieve a voicemail
     @cherrypy.expose
     def voicemail(self, vm):
-        if debug:
-            for header in cherrypy.request.headers.keys():
-                log("phone", header, ":", cherrypy.request.headers[header])
-        vmFile = open(filePath+vm)
-        vMsg = vmFile.read()
-        vmFile.close()
+        try:
+            vmFile = open(filePath+vm)
+            vMsg = vmFile.read()
+            vmFile.close()
+        except:
+            raise cherrypy.HTTPError(404)
         cherrypy.response.headers['Content-Type'] = "audio/x-mp3"
-        cherrypy.response.headers['Content-Range'] = "bytes 0-"+str(len(vMsg)-1)+"/"+str(len(vMsg))
-        #cherrypy.response.headers['Content-Disposition'] = "attachment; filename='"+vm+"'"
+        cherrypy.response.headers['Content-Range'] = "bytes 0-"
         return vMsg
                 
 if __name__ == "__main__":
