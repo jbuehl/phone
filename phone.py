@@ -116,7 +116,9 @@ class WebRoot(object):
             vMsg = vmFile.read()
             vmFile.close()
         except:
-            raise cherrypy.HTTPError(404)
+            if debug: log("phone", vm, "not found")
+            cherrypy.response.status = 404
+            return ""
         cherrypy.response.headers['Content-Type'] = "audio/x-mp3"
         cherrypy.response.headers['Content-Range'] = "bytes 0-"
         return vMsg

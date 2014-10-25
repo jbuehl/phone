@@ -3,7 +3,7 @@ debug = True
 # white list of callers to pass through
 whitelist = {
         "+18187486084":"Home phone",
-#        "+18182095530":"Joe cell",
+        "+18182095530":"Joe cell",
 	    "+18189129504":"Joe cell",
         "+18186419862":"Linda cell",
 	    "+18188024334":"Linda cell",
