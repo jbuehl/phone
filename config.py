@@ -10,7 +10,7 @@ whitelist = {
         "+18182384524":"Linda work",
         "+18187203111":"Eric cell",
         "+18182377233":"Janet cell",
-        "+18189958786":"Winnie home",
+#        "+18189958786":"Winnie home",
         "+18183706119":"Winnie cell",
         "+15105493429":"Kathy home",
         "+15106849801":"Kathy cell",
@@ -42,13 +42,24 @@ blacklist = {
         "+10000000000":"spoofed"
     }
 
+# SMS forwarding
+smsForward = {
+        "+18183517462":"+18182095530",
+        "+18188024334":"+18186419862",
+    }
+    
 # configuration parameters
+logging = True
+smsSid = "ACb23ede7e725ca29d1174bc804ad13c76"
+smsToken = "e39a9f47bf77f166c14fce4d49039f59"
 webPort = 3663
 home = "+18187486084"             # home phone number
 timeout = "30"                    # how long to ring the phone before going to voicemail
 maxlength = "120"                 # maximum time to record a voicemail
 mailFrom = "phone@thebuehls.com"
 mailTo = "joe@thebuehls.com" # where to send email notifications to
+notifyFromNumber = "+18187612186"
+notifyNumbers = ["+18182095530", "+18186419862"]
 filePath = "/root/voicemails/"   # absolute path of where to store voicemails
 urlPath = "shadyglade.thebuehls.com:3663/voicemail?vm="                   # url path of where to retrieve voicemails
 minRecording = 3                   # minimum size of a voicemail to pay attention to

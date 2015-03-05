@@ -7,6 +7,7 @@ import syslog
 import time
 import smtplib
 from email.mime.text import MIMEText
+from twilio.rest import TwilioRestClient
 from config import *
 
 def log(*args):
@@ -25,6 +26,13 @@ def email(fromAddr, toAddr, subject, message):
     s.sendmail(fromAddr, [toAddr], msg.as_string())
     s.quit()
 
+# send an sms notification
+def smsNotify(notifyFromNumber, notifyNumbers, message):
+    smsClient = TwilioRestClient(smsSid, smsToken)
+    smsFrom = notifyFromNumber
+    for smsTo in notifyNumbers:
+        smsClient.sms.messages.create(to=smsTo, from_=smsFrom, body=message)
+
 def phoneFmt(number):
     return "%s %s-%s" % (number[2:5], number[5:8], number[8:])
     
@@ -41,7 +49,7 @@ class WebRoot(object):
         if debug: log("phone", "call from", From, "to", To)
         cherrypy.response.headers['Content-Type'] = "text/xml"
         response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
-        response += "<Response>\n";
+        response += "<Response>\n"
         if From in whitelist.keys():
             if debug: log("phone", From, "is in whitelist")
             response += "   <Dial timeout='"+timeout+"' action='record' method='GET'>"+home+"</Dial>\n"
@@ -77,7 +85,7 @@ class WebRoot(object):
                Direction, CallStatus, ToZip, CallerCity, FromCountry, CalledCity, 
                CalledCountry, Caller, CallerState, AccountSid, Called, CallerCountry, 
                CalledZip, CallerZip, CallSid, ToCountry, ToState,
-               RecordingUrl, RecordingDuration, RecordingSid, Digits):
+               RecordingUrl, RecordingDuration, RecordingSid, Digits=None):
         if debug: log("phone", "received", RecordingDuration, "second voicemail from", From)
         
         # copy the file from Twilio's server and convert it to mp3
@@ -104,7 +112,8 @@ class WebRoot(object):
             message  = "You have a new voicemail from "+phoneFmt(Caller)+"\n\n"
             message += "Click this link to listen to the message:\n"
             message += "http://"+urlPath+mp3File
-            email(mailFrom, mailTo, subject, message)
+#            email(mailFrom, mailTo, subject, message)
+            smsNotify(notifyFromNumber, notifyNumbers, message)
         else:
             if debug: log("phone", "recording too short to send notification")
 
@@ -123,6 +132,26 @@ class WebRoot(object):
         cherrypy.response.headers['Content-Range'] = "bytes 0-"
         return vMsg
                 
+    # SMS   
+    @cherrypy.expose
+    def sms(self, From, FromZip, FromCity, ApiVersion, To, ToCity, FromState, 
+               ToZip, FromCountry, ToCountry, ToState, AccountSid, 
+               Body, MessageSid, SmsStatus, SmsMessageSid, NumMedia, SmsSid):
+        if debug: log("phone", "SMS from", From, "to", To)
+        try:
+            Forward = smsForward[To]
+            if debug: log("phone", "forwarding to", Forward)
+            cherrypy.response.headers['Content-Type'] = "text/xml"
+            response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
+            response += "<Response>\n"
+            response += "   <Message to='"+Forward+"'>\n"
+            response += "       From "+From+": "+Body+"\n"
+            response += "   </Message>\n"
+            response += "</Response>\n"
+            return response
+        except:
+            if debug: log("phone", To, "not in SMS forwrding list")
+        
 if __name__ == "__main__":
 
     # set up the web server
@@ -150,8 +179,9 @@ if __name__ == "__main__":
     cherrypy.config.update(globalConfig)
     root = WebRoot()
     cherrypy.tree.mount(root, "/", appConfig)
-    access_log = cherrypy.log.access_log
-    for handler in tuple(access_log.handlers):
-        access_log.removeHandler(handler)
+    if not logging:
+        access_log = cherrypy.log.access_log
+        for handler in tuple(access_log.handlers):
+            access_log.removeHandler(handler)
     cherrypy.engine.start()
 
