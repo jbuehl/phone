@@ -50,8 +50,8 @@ smsForward = {
     
 # configuration parameters
 logging = True
-smsSid = "ACb23ede7e725ca29d1174bc804ad13c76"
-smsToken = "e39a9f47bf77f166c14fce4d49039f59"
+smsSid = ""
+smsToken = ""
 webPort = 3663
 home = "+18187486084"             # home phone number
 timeout = "30"                    # how long to ring the phone before going to voicemail
