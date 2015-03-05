@@ -5,6 +5,7 @@ import urllib
 import cherrypy
 import syslog
 import time
+import json
 import smtplib
 from email.mime.text import MIMEText
 from twilio.rest import TwilioRestClient
@@ -17,6 +18,10 @@ def log(*args):
 #    print message
     syslog.syslog(message)
 
+# get the value of a variable from a file
+def getValue(fileName):
+    return json.load(open(fileName))
+    
 def email(fromAddr, toAddr, subject, message):
     msg = MIMEText(message)
     msg['Subject'] = subject
@@ -28,7 +33,7 @@ def email(fromAddr, toAddr, subject, message):
 
 # send an sms notification
 def smsNotify(notifyFromNumber, notifyNumbers, message):
-    smsClient = TwilioRestClient(smsSid, smsToken)
+    smsClient = TwilioRestClient(getValue(smsSid), getValue(smsToken))
     smsFrom = notifyFromNumber
     for smsTo in notifyNumbers:
         smsClient.sms.messages.create(to=smsTo, from_=smsFrom, body=message)

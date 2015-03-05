@@ -50,17 +50,19 @@ smsForward = {
     
 # configuration parameters
 logging = True
-smsSid = ""
-smsToken = ""
 webPort = 3663
 home = "+18187486084"             # home phone number
 timeout = "30"                    # how long to ring the phone before going to voicemail
 maxlength = "120"                 # maximum time to record a voicemail
 mailFrom = "phone@thebuehls.com"
 mailTo = "joe@thebuehls.com" # where to send email notifications to
+rootDir = "/root/"
+keyDir = rootDir+"keys/"
+smsSid = keyDir+"twilio.sid"
+smsToken = keyDir+"twilio.tkn"
 notifyFromNumber = "+18187612186"
 notifyNumbers = ["+18182095530", "+18186419862"]
-filePath = "/root/voicemails/"   # absolute path of where to store voicemails
+filePath = rootDir+"voicemails/"   # absolute path of where to store voicemails
 urlPath = "shadyglade.thebuehls.com:3663/voicemail?vm="                   # url path of where to retrieve voicemails
 minRecording = 3                   # minimum size of a voicemail to pay attention to
 recordingLanguage = "en-US"
