@@ -93,29 +93,20 @@ class WebRoot(object):
                RecordingUrl, RecordingDuration, RecordingSid, Digits=None):
         if debug: log("phone", "received", RecordingDuration, "second voicemail from", From)
         
-        # copy the file from Twilio's server and convert it to mp3
-        twilioUrl = urllib.unquote(RecordingUrl)
+        # copy the file from Twilio's server
+        twilioUrl = urllib.unquote(RecordingUrl)+".mp3"
         fileName = time.strftime("%Y%m%d%H%M%S")
-        wavFile = fileName+".wav"
         mp3File = fileName+".mp3"
-        command = "wget "+twilioUrl+" -O "+filePath+wavFile
-        if debug: log("phone", "copying recording from", twilioUrl, "to", filePath+wavFile)
-        os.system(command)
-        command = "lame -b160 "+filePath+wavFile+" "+filePath+mp3File
-        if debug: log("phone", "converting recording from", filePath+wavFile, "to", filePath+mp3File)
-        os.system(command)
-        command = "rm "+filePath+wavFile
-        if debug: log("phone", "deleting", filePath+wavFile)
+        command = "wget "+twilioUrl+" -O "+filePath+mp3File
+        if debug: log("phone", "copying recording from", twilioUrl, "to", filePath+mp3File)
         os.system(command)
         
         # send the notification if it is longer than the minimum time
         if int(RecordingDuration) > minRecording:
             if debug: log("phone", "sending notification")
-        
             # send the email announcing the voicemail
             subject = "New voicemail from "+phoneFmt(Caller)
-            message  = "You have a new voicemail from "+phoneFmt(Caller)+"\n\n"
-            message += "Click this link to listen to the message:\n"
+            message  = "You have a new voicemail from "+phoneFmt(Caller)+"\n"
             message += "http://"+urlPath+mp3File
 #            email(mailFrom, mailTo, subject, message)
             smsNotify(notifyFromNumber, notifyNumbers, message)
