@@ -9,15 +9,57 @@ import json
 import smtplib
 from email.mime.text import MIMEText
 from twilio.rest import TwilioRestClient
-from config import *
+#from config import *
 
+rootDir = "/root/"
+keyDir = rootDir+"keys/"
+configDir = rootDir+"phone-conf/"
+dataDir = rootDir+"phone-data/"
+smsSid = keyDir+"twilio.sid"
+smsToken = keyDir+"twilio.tkn"
+debugEnable = True
+debugConf = True
+
+# read configuration
+whitelist = json.load(open(dataDir+"whitelist"))
+blacklist = json.load(open(dataDir+"blacklist"))
+smsForward = json.load(open(dataDir+"smsForward"))
+
+# log a message
 def log(*args):
-    message = args[0]+" "
+    message = args[0]+" "   # first argument is the object doing the logging
     for arg in args[1:]:
         message += arg.__str__()+" "
-#    print message
-    syslog.syslog(message)
+    if sysLogging:
+        syslog.syslog(message)
+    else:
+        print message
 
+# log a debug message
+def debug(*args):
+    if debugEnable:   # global debug flag enables debugging
+        try:
+            if globals()[args[0]]:
+                log(*args[1:])
+        except:
+            pass
+            
+# read configuration files
+for configFileName in os.listdir(configDir):
+    debug('debugConf', "config open", configFileName)
+    try:
+        with open(configDir+configFileName) as configFile:
+            configLines = [configLine.rstrip('\n') for configLine in configFile]
+        for configLine in configLines:
+            if (len(configLine) > 0) and (configLine[0] != "#"):
+                try:
+                    exec(configLine)
+                    debug('debugConf', "config read", configLine)
+                except:
+                    log("config", "error evaluating", configLine)
+    except:
+        log("config", "error reading", configDir+configFileName)
+        
 # get the value of a variable from a file
 def getValue(fileName):
     return json.load(open(fileName))
@@ -51,18 +93,18 @@ class WebRoot(object):
                Direction, CallStatus, ToZip, CallerCity, FromCountry, CalledCity, 
                CalledCountry, Caller, CallerState, AccountSid, Called, CallerCountry, 
                CalledZip, CallerZip, CallSid, ToCountry, ToState):
-        if debug: log("phone", "call from", From, "to", To)
+        if debugEnable: log("phone", "call from", From, "to", To)
         cherrypy.response.headers['Content-Type'] = "text/xml"
         response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
         response += "<Response>\n"
         if From in whitelist.keys():
-            if debug: log("phone", From, "is in whitelist")
+            if debugEnable: log("phone", From, "is in whitelist")
             response += "   <Dial timeout='"+timeout+"' action='record' method='GET'>"+home+"</Dial>\n"
         elif From in blacklist.keys():
-            if debug: log("phone", From, "is in blacklist")
+            if debugEnable: log("phone", From, "is in blacklist")
             response += "   <Reject reason='busy' />\n"
         else:
-            if debug: log("phone", From, "is unknown")
+            if debugEnable: log("phone", From, "is unknown")
             response += "   <Say voice='alice' language='"+recordingLanguage+"'>"+unknownMessage+"</Say>\n"
             response += "   <Record action='save' maxLength='"+maxlength+"' method='GET'/>\n"        
         response += "</Response>\n"
@@ -75,7 +117,7 @@ class WebRoot(object):
                CalledCountry, Caller, CallerState, AccountSid, Called, CallerCountry, 
                CalledZip, CallerZip, CallSid, ToCountry, ToState,
                DialCallSid, DialCallStatus):
-        if debug: log("phone", "recording voicemail from", From)
+        if debugEnable: log("phone", "recording voicemail from", From)
         cherrypy.response.headers['Content-Type'] = "text/xml"
         response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
         response += "<Response>\n"
@@ -91,19 +133,19 @@ class WebRoot(object):
                CalledCountry, Caller, CallerState, AccountSid, Called, CallerCountry, 
                CalledZip, CallerZip, CallSid, ToCountry, ToState,
                RecordingUrl, RecordingDuration, RecordingSid, Digits=None):
-        if debug: log("phone", "received", RecordingDuration, "second voicemail from", From)
+        if debugEnable: log("phone", "received", RecordingDuration, "second voicemail from", From)
         
         # copy the file from Twilio's server
         twilioUrl = urllib.unquote(RecordingUrl)+".mp3"
         fileName = time.strftime("%Y%m%d%H%M%S")
         mp3File = fileName+".mp3"
         command = "wget "+twilioUrl+" -O "+filePath+mp3File
-        if debug: log("phone", "copying recording from", twilioUrl, "to", filePath+mp3File)
+        if debugEnable: log("phone", "copying recording from", twilioUrl, "to", filePath+mp3File)
         os.system(command)
         
         # send the notification if it is longer than the minimum time
         if int(RecordingDuration) > minRecording:
-            if debug: log("phone", "sending notification")
+            if debugEnable: log("phone", "sending notification")
             # send the email announcing the voicemail
             subject = "New voicemail from "+phoneFmt(Caller)
             message  = "You have a new voicemail from "+phoneFmt(Caller)+"\n"
@@ -111,7 +153,7 @@ class WebRoot(object):
 #            email(mailFrom, mailTo, subject, message)
             smsNotify(notifyFromNumber, notifyNumbers, message)
         else:
-            if debug: log("phone", "recording too short to send notification")
+            if debugEnable: log("phone", "recording too short to send notification")
 
     # Retrieve a voicemail
     @cherrypy.expose
@@ -121,7 +163,7 @@ class WebRoot(object):
             vMsg = vmFile.read()
             vmFile.close()
         except:
-            if debug: log("phone", vm, "not found")
+            if debugEnable: log("phone", vm, "not found")
             cherrypy.response.status = 404
             return ""
         cherrypy.response.headers['Content-Type'] = "audio/x-mp3"
@@ -133,10 +175,10 @@ class WebRoot(object):
     def sms(self, From, FromZip, FromCity, ApiVersion, To, ToCity, FromState, 
                ToZip, FromCountry, ToCountry, ToState, AccountSid, 
                Body, MessageSid, SmsStatus, SmsMessageSid, NumMedia, SmsSid):
-        if debug: log("phone", "SMS from", From, "to", To)
+        if debugEnable: log("phone", "SMS from", From, "to", To)
         try:
             Forward = smsForward[To]
-            if debug: log("phone", "forwarding to", Forward)
+            if debugEnable: log("phone", "forwarding to", Forward)
             cherrypy.response.headers['Content-Type'] = "text/xml"
             response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
             response += "<Response>\n"
@@ -146,36 +188,20 @@ class WebRoot(object):
             response += "</Response>\n"
             return response
         except:
-            if debug: log("phone", To, "not in SMS forwrding list")
+            if debugEnable: log("phone", To, "not in SMS forwrding list")
         
 if __name__ == "__main__":
-
     # set up the web server
     baseDir = os.path.abspath(os.path.dirname(__file__))
     globalConfig = {
         'server.socket_port': webPort,
         'server.socket_host': "0.0.0.0",
         }
-    appConfig = {
-#        '/css': {
-#            'tools.staticdir.on': True,
-#            'tools.staticdir.root': os.path.join(baseDir, "static"),
-#            'tools.staticdir.dir': "css",
-#        },
-#        '/js': {
-#            'tools.staticdir.on': True,
-#            'tools.staticdir.root': os.path.join(baseDir, "static"),
-#            'tools.staticdir.dir': "js",
-#        },
-#        '/favicon.ico': {
-#            'tools.staticfile.on': True,
-#            'tools.staticfile.filename': os.path.join(baseDir, "static/favicon.ico"),
-#        },
-    }    
+    appConfig = {}    
     cherrypy.config.update(globalConfig)
     root = WebRoot()
     cherrypy.tree.mount(root, "/", appConfig)
-    if not logging:
+    if not webLogging:
         access_log = cherrypy.log.access_log
         for handler in tuple(access_log.handlers):
             access_log.removeHandler(handler)
