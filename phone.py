@@ -9,21 +9,11 @@ import json
 import smtplib
 from email.mime.text import MIMEText
 from twilio.rest import TwilioRestClient
-#from config import *
 
 rootDir = "/root/"
-keyDir = rootDir+"keys/"
 configDir = rootDir+"phone-conf/"
-dataDir = rootDir+"phone-data/"
-smsSid = keyDir+"twilio.sid"
-smsToken = keyDir+"twilio.tkn"
 debugEnable = True
 debugConf = True
-
-# read configuration
-whitelist = json.load(open(dataDir+"whitelist"))
-blacklist = json.load(open(dataDir+"blacklist"))
-smsForward = json.load(open(dataDir+"smsForward"))
 
 # log a message
 def log(*args):
@@ -60,11 +50,17 @@ for configFileName in os.listdir(configDir):
     except:
         log("config", "error reading", configDir+configFileName)
         
+# read data
+whitelist = json.load(open(dataDir+"whitelist"))
+blacklist = json.load(open(dataDir+"blacklist"))
+smsForward = json.load(open(dataDir+"smsForward"))
+
 # get the value of a variable from a file
 def getValue(fileName):
     return json.load(open(fileName))
-    
-def email(fromAddr, toAddr, subject, message):
+
+# send an email notification    
+def sendEmail(fromAddr, toAddr, subject, message):
     msg = MIMEText(message)
     msg['Subject'] = subject
     msg['From'] = fromAddr
@@ -74,12 +70,13 @@ def email(fromAddr, toAddr, subject, message):
     s.quit()
 
 # send an sms notification
-def smsNotify(notifyFromNumber, notifyNumbers, message):
+def sendSms(notifyFromNumber, notifyNumbers, message):
     smsClient = TwilioRestClient(getValue(smsSid), getValue(smsToken))
     smsFrom = notifyFromNumber
     for smsTo in notifyNumbers:
         smsClient.sms.messages.create(to=smsTo, from_=smsFrom, body=message)
 
+# format a phone number for display
 def phoneFmt(number):
     return "%s %s-%s" % (number[2:5], number[5:8], number[8:])
     
@@ -150,8 +147,8 @@ class WebRoot(object):
             subject = "New voicemail from "+phoneFmt(Caller)
             message  = "You have a new voicemail from "+phoneFmt(Caller)+"\n"
             message += "http://"+urlPath+mp3File
-#            email(mailFrom, mailTo, subject, message)
-            smsNotify(notifyFromNumber, notifyNumbers, message)
+            if notifyEmail: sendEmail(mailFrom, mailTo, subject, message)
+            if notifySms: sendSms(notifyFromNumber, notifyNumbers, message)
         else:
             if debugEnable: log("phone", "recording too short to send notification")
 
@@ -170,7 +167,7 @@ class WebRoot(object):
         cherrypy.response.headers['Content-Range'] = "bytes 0-"
         return vMsg
                 
-    # SMS   
+    # SMS message forwarding  
     @cherrypy.expose
     def sms(self, From, FromZip, FromCity, ApiVersion, To, ToCity, FromState, 
                ToZip, FromCountry, ToCountry, ToState, AccountSid, 
