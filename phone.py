@@ -96,7 +96,11 @@ class WebRoot(object):
         response += "<Response>\n"
         if From in whitelist.keys():
             if debugEnable: log("phone", From, "is in whitelist")
-            response += "   <Dial timeout='"+timeout+"' action='record' method='GET'>"+home+"</Dial>\n"
+            response += "   <Dial timeout='"+timeout+"' action='record' method='GET'>"
+            if debugEnable: log("phone", "forwarding to", str(whitelist[From][2]))
+            for number in whitelist[From][2]:
+                response += "<Number>"+number+"</Number>\n"
+            response += "</Dial>\n"
         elif From in blacklist.keys():
             if debugEnable: log("phone", From, "is in blacklist")
             response += "   <Reject reason='busy' />\n"
