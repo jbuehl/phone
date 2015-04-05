@@ -9,9 +9,15 @@
 <body>
     <h1>{{ title }}</h1>
     <br>
-    <h2>Whitelist</h2>
+    <h2>Whitelist for {{ number }}</h2>
     <table border=0 width=1320 style='table-layout:fixed'>
         <col width=10><col width=20><col width=10><col width=80>
+        <tr>
+            <th><div class=heading>Number</div></th>
+            <th><div class=heading>Who</div></th>
+            <th><div class=heading>Type</div></th>
+            <th><div class=heading>Forward</div></th>
+        </tr>
         {% for w in white %}
         <tr>
             <td><div class=label>{{ w[0] }}</div></td>
@@ -26,13 +32,41 @@
         {% endfor %}
     </table>
     <br>
-    <h2>Blacklist</h2>
+    <h2>Blacklist for {{ number }}</h2>
     <table border=0 width=1320 style='table-layout:fixed'>
         <col width=10><col width=20><col width=10><col width=80>
+        <tr>
+            <th><div class=heading>Number</div></th>
+            <th><div class=heading>Who</div></th>
+        </tr>
         {% for b in black %}
         <tr>
             <td><div class=label>{{ b[0] }}</div></td>
             <td><div class=label>{{ b[1] }}</div></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+    <h2>Call log for {{ number }}</h2>
+    <table border=0 width=1320 style='table-layout:fixed'>
+        <col width=24><col width=10><col width=16><col width=10><col width=80>
+        <tr>
+            <th><div class=heading>Time</div></th>
+            <th><div class=heading>Type</div></th>
+            <th><div class=heading>From</div></th>
+            <th><div class=heading>Result</div></th>
+        </tr>
+        {% for l in log %}
+        <tr>
+            <td><div class=label>{{ l[0] }}</div></td>
+            <td><div class=label>{{ l[1] }}</div></td>
+            <td><div class=label>{{ l[2] }}</div></td>
+            <td><div class=label>{{ l[3] }}</div></td>
+            <td><div class=label>
+            {% for f in l[4] %}
+                <span class=label>{{ f }}</span>
+            {% endfor %}
+            </div></td>
         </tr>
         {% endfor %}
     </table>
