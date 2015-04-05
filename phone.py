@@ -9,6 +9,7 @@ import json
 import smtplib
 from email.mime.text import MIMEText
 from twilio.rest import TwilioRestClient
+from jinja2 import Environment, FileSystemLoader
 
 rootDir = "/root/"
 configDir = rootDir+"phone-conf/"
@@ -81,9 +82,25 @@ def phoneFmt(number):
     return "%s %s-%s" % (number[2:5], number[5:8], number[8:])
     
 class WebRoot(object):
-    def __init__(self):
-        pass
+    def __init__(self, env):
+        self.env = env
             
+    # UI    
+    @cherrypy.expose
+    def index(self, action=None, resource=None):
+        whiteDisp = []
+        for w in whitelist.keys():
+            whiteDisp += [[phoneFmt(w), whitelist[w][0], whitelist[w][1], [phoneFmt(f) for f in whitelist[w][2]]]]
+        blackDisp = []
+        for b in blacklist.keys():
+            blackDisp += [[phoneFmt(b), blacklist[b]]]
+        if debugEnable: log("phone", "whiteDisp", str(whiteDisp))
+        if debugEnable: log("phone", "blackDisp", str(blackDisp))
+        reply = self.env.get_template("default.html").render(title="Phone screening", script="", 
+                            white=whiteDisp,
+                            black=blackDisp)
+        return reply
+
     # Answer an incoming call    
     @cherrypy.expose
     def answer(self, From, FromZip, FromCity, ApiVersion, To, ToCity, CalledState, FromState, 
@@ -198,9 +215,24 @@ if __name__ == "__main__":
         'server.socket_port': webPort,
         'server.socket_host': "0.0.0.0",
         }
-    appConfig = {}    
+    appConfig = {
+        '/css': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.root': os.path.join(baseDir, "static"),
+            'tools.staticdir.dir': "css",
+        },
+        '/js': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.root': os.path.join(baseDir, "static"),
+            'tools.staticdir.dir': "js",
+        },
+        '/favicon.ico': {
+            'tools.staticfile.on': True,
+            'tools.staticfile.filename': os.path.join(baseDir, "static/favicon.ico"),
+        },
+    }    
     cherrypy.config.update(globalConfig)
-    root = WebRoot()
+    root = WebRoot(Environment(loader=FileSystemLoader(os.path.join(baseDir, 'templates'))))
     cherrypy.tree.mount(root, "/", appConfig)
     if not webLogging:
         access_log = cherrypy.log.access_log

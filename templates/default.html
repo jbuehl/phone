@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en'>
+<head>
+    <title>{{ title }}</title>
+    <link rel='stylesheet' type='text/css' href='css/default.css'> 
+    <script src='js/jquery.js'></script>
+    {{ script }}
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    <br>
+    <h2>Whitelist</h2>
+    <table border=0 width=1320 style='table-layout:fixed'>
+        <col width=10><col width=20><col width=10><col width=80>
+        {% for w in white %}
+        <tr>
+            <td><div class=label>{{ w[0] }}</div></td>
+            <td><div class=label>{{ w[1] }}</div></td>
+            <td><div class=label>{{ w[2] }}</div></td>
+            <td><div class=label>
+            {% for f in w[3] %}
+                <span class=label>{{ f }}</span>
+            {% endfor %}
+            </div></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+    <h2>Blacklist</h2>
+    <table border=0 width=1320 style='table-layout:fixed'>
+        <col width=10><col width=20><col width=10><col width=80>
+        {% for b in black %}
+        <tr>
+            <td><div class=label>{{ b[0] }}</div></td>
+            <td><div class=label>{{ b[1] }}</div></td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
+
