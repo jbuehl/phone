@@ -13,8 +13,10 @@ from jinja2 import Environment, FileSystemLoader
 
 rootDir = "/root/"
 configDir = rootDir+"phone-conf/"
-debugEnable = True
-debugConf = True
+debugEnable = False
+debugConf = False
+sysLogging = True
+webLogging = False
 
 # log a message
 def log(*args):
@@ -96,18 +98,22 @@ class WebRoot(object):
             
     # Web UI    
     @cherrypy.expose
-    def index(self, action=None, resource=None):
-        reply = ""
+    def index(self, number=None):
+        if number:
+            numbers = ["+1"+number]
+        else:
+            numbers = phoneData.keys()
+        response = ""
         title="Phone screening"
-        for To in phoneData.keys():
+        for number in numbers:
             # format the whitelist
             whiteDisp = []
-            for w in phoneData[To]["whitelist"].keys():
-                whiteDisp += [[phoneFmt(w), phoneData[To]["whitelist"][w][0], phoneData[To]["whitelist"][w][1], [phoneFmt(f) for f in phoneData[To]["whitelist"][w][2]]]]
+            for w in phoneData[number]["whitelist"].keys():
+                whiteDisp += [[phoneFmt(w), phoneData[number]["whitelist"][w][0], phoneData[number]["whitelist"][w][1], [phoneFmt(f) for f in phoneData[number]["whitelist"][w][2]]]]
             # format the blacklist
             blackDisp = []
-            for b in phoneData[To]["blacklist"].keys():
-                blackDisp += [[phoneFmt(b), phoneData[To]["blacklist"][b]]]
+            for b in phoneData[number]["blacklist"].keys():
+                blackDisp += [[phoneFmt(b), phoneData[number]["blacklist"][b]]]
             # format the log file
             with open(logFileName) as logFile:
                 logLines = [logLine.rstrip('\n').split(",") for logLine in logFile]
@@ -116,78 +122,89 @@ class WebRoot(object):
             for logLine in logLines:
                 while len(logLine) < 6:
                     logLine += [""]
-                if logLine[3] == To:
+                if logLine[3] == number:
                     logDisp += [[logLine[0], logLine[1], phoneFmt(logLine[2]), logLine[4], [phoneFmt(f) for f in logLine[5].split("|")]]]
             # build the web page
-            reply += self.env.get_template("default.html").render(title=title, script="",
-                                number=phoneFmt(To), 
+            response += self.env.get_template("default.html").render(title=title, script="",
+                                number=phoneFmt(number), 
                                 white=whiteDisp,
                                 black=blackDisp,
                                 log=logDisp)
             title = ""
-        return reply
+        return response
 
     # Answer an incoming call    
     @cherrypy.expose
-    def answer(self, From, FromZip, FromCity, ApiVersion, To, ToCity, CalledState, FromState, 
-               Direction, CallStatus, ToZip, CallerCity, FromCountry, CalledCity, 
-               CalledCountry, Caller, CallerState, AccountSid, Called, CallerCountry, 
-               CalledZip, CallerZip, CallSid, ToCountry, ToState):
-        debug("debugEnable", "phone", "call from", From, "to", To)
+    def answer(self, From=None, FromZip=None, FromCity=None, ApiVersion=None, To=None, ToCity=None, CalledState=None, FromState=None, 
+               Direction=None, CallStatus=None, ToZip=None, CallerCity=None, FromCountry=None, CalledCity=None, 
+               CalledCountry=None, Caller=None, CallerState=None, AccountSid=None, Called=None, CallerCountry=None, 
+               CalledZip=None, CallerZip=None, CallSid=None, ToCountry=None, ToState=None, ForwardedFrom=None, CalledVia=None):
+#        debug("debugEnable", "phone", "call from", From, "to", To)
         logMsg = "incoming,"+From+","+To
         cherrypy.response.headers['Content-Type'] = "text/xml"
-        response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
-        response += "<Response>\n"
+#        response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
+#        response += "<Response>\n"
         if From in phoneData[To]["whitelist"].keys():
-            debug("debugEnable", "phone", From, "is in whitelist")
+#            debug("debugEnable", "phone", From, "is in whitelist")
             logMsg += ",forwarded,"
-            response += "   <Dial timeout='"+str(timeout)+"' action='record' method='GET'>"
-            debug("debugEnable", "phone", "forwarding to", str(phoneData[To]["whitelist"][From][2]))
+#            response += "   <Dial timeout='"+str(timeout)+"' action='record' method='GET'>"
+#            debug("debugEnable", "phone", "forwarding to", str(phoneData[To]["whitelist"][From][2]))
             for number in phoneData[To]["whitelist"][From][2]:
-                response += "<Number>"+number+"</Number>\n"
+#                response += "<Number>"+number+"</Number>\n"
                 logMsg += number+"|"
             logMsg = logMsg.rstrip("|")
-            response += "</Dial>\n"
+#            response += "</Dial>\n"
+            response = self.env.get_template("accept.html").render(timeout=timeout,
+                                                        numbers=phoneData[To]["whitelist"][From][2])
         elif From in phoneData[To]["blacklist"].keys():
-            debug("debugEnable", "phone", From, "is in blacklist")
+#            debug("debugEnable", "phone", From, "is in blacklist")
             logMsg += ",rejected"
-            response += "   <Reject reason='busy' />\n"
+#            response += "   <Reject reason='busy' />\n"
+            response = self.env.get_template("reject.html").render()
         else:
-            debug("debugEnable", "phone", From, "is unknown")
+#            debug("debugEnable", "phone", From, "is unknown")
             logMsg += ",unknown"
-            response += "   <Say voice='"+phoneData[To]["recordingVoice"]+"' language='"+phoneData[To]["recordingLanguage"]+"'>"+phoneData[To]["unknownMessage"]+"</Say>\n"
-            response += "   <Record action='save' maxLength='"+maxlength+"' method='GET'/>\n"        
-        response += "</Response>\n"
+#            response += "   <Say voice='"+phoneData[To]["recordingVoice"]+"' language='"+phoneData[To]["recordingLanguage"]+"'>"+phoneData[To]["unknownMessage"]+"</Say>\n"
+#            response += "   <Record action='save' maxLength='"+str(maxlength)+"' method='GET'/>\n"        
+#        response += "</Response>\n"
+            response = self.env.get_template("record.html").render(recordingVoice=phoneData[To]["recordingVoice"],
+                                                        recordingLanguage=phoneData[To]["recordingLanguage"],
+                                                        announcement=phoneData[To]["unknownMessage"],
+                                                        maxlength=str(maxlength))
         log(logMsg)
         return response
 
     # Record a voicemail from a whitelisted number    
     @cherrypy.expose
-    def record(self, From, FromZip, FromCity, ApiVersion, To, ToCity, CalledState, FromState, 
-               Direction, CallStatus, ToZip, CallerCity, FromCountry, CalledCity, 
-               CalledCountry, Caller, CallerState, AccountSid, Called, CallerCountry, 
-               CalledZip, CallerZip, CallSid, ToCountry, ToState,
-               DialCallSid, DialCallStatus):
-        debug("debugEnable", "phone", "recording voicemail from", From)
+    def record(self, From=None, FromZip=None, FromCity=None, ApiVersion=None, To=None, ToCity=None, CalledState=None, FromState=None, 
+               Direction=None, CallStatus=None, ToZip=None, CallerCity=None, FromCountry=None, CalledCity=None, 
+               CalledCountry=None, Caller=None, CallerState=None, AccountSid=None, Called=None, CallerCountry=None, 
+               CalledZip=None, CallerZip=None, CallSid=None, ToCountry=None, ToState=None,
+               DialCallSid=None, DialCallStatus=None):
+#        debug("debugEnable", "phone", "recording voicemail from", From)
         logMsg = "recording,"+From+","+To
         cherrypy.response.headers['Content-Type'] = "text/xml"
-        response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
-        response += "<Response>\n"
-        response += "   <Say voice='"+phoneData[To]["recordingVoice"]+"' language='"+phoneData[To]["recordingLanguage"]+"'>"+phoneData[To]["whitelistMessage"]+"</Say>\n"
-        response += "   <Record action='save' maxLength='"+str(maxlength)+"' method='GET'/>\n"        
-        response += "</Response>\n"
+#        response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
+#        response += "<Response>\n"
+#        response += "   <Say voice='"+phoneData[To]["recordingVoice"]+"' language='"+phoneData[To]["recordingLanguage"]+"'>"+phoneData[To]["whitelistMessage"]+"</Say>\n"
+#        response += "   <Record action='save' maxLength='"+str(maxlength)+"' method='GET'/>\n"        
+#        response += "</Response>\n"
+        response = self.env.get_template("record.html").render(recordingVoice=phoneData[To]["recordingVoice"],
+                                                    recordingLanguage=phoneData[To]["recordingLanguage"],
+                                                    announcement=phoneData[To]["whitelistMessage"],
+                                                    maxlength=str(maxlength))
         log(logMsg)
         return response
 
     # Save a recorded voicemail   
     @cherrypy.expose
-    def save(self, From, FromZip, FromCity, ApiVersion, To, ToCity, CalledState, FromState, 
-               Direction, CallStatus, ToZip, CallerCity, FromCountry, CalledCity, 
-               CalledCountry, Caller, CallerState, AccountSid, Called, CallerCountry, 
-               CalledZip, CallerZip, CallSid, ToCountry, ToState,
-               RecordingUrl, RecordingDuration, RecordingSid, Digits=None):
-        debug("debugEnable", "phone", "received", RecordingDuration, "second voicemail from", From)
-        logMsg = "recorded,"+From+","+To+","+str(RecordingDuration)
+    def save(self, From=None, FromZip=None, FromCity=None, ApiVersion=None, To=None, ToCity=None, CalledState=None, FromState=None, 
+               Direction=None, CallStatus=None, ToZip=None, CallerCity=None, FromCountry=None, CalledCity=None, 
+               CalledCountry=None, Caller=None, CallerState=None, AccountSid=None, Called=None, CallerCountry=None, 
+               CalledZip=None, CallerZip=None, CallSid=None, ToCountry=None, ToState=None,
+               RecordingUrl=None, RecordingDuration=None, RecordingSid=None, Digits=None):
+#        debug("debugEnable", "phone", "received", RecordingDuration, "second voicemail from", From)
+        logMsg = "recorded,"+From+","+To+","+str(RecordingDuration)+" secs"
         
         # copy the file from Twilio's server
         twilioUrl = urllib.unquote(RecordingUrl)+".mp3"
@@ -230,9 +247,9 @@ class WebRoot(object):
                 
     # SMS message forwarding  
     @cherrypy.expose
-    def sms(self, From, FromZip, FromCity, ApiVersion, To, ToCity, FromState, 
-               ToZip, FromCountry, ToCountry, ToState, AccountSid, 
-               Body, MessageSid, SmsStatus, SmsMessageSid, NumMedia, SmsSid):
+    def sms(self, From=None, FromZip=None, FromCity=None, ApiVersion=None, To=None, ToCity=None, FromState=None, 
+               ToZip=None, FromCountry=None, ToCountry=None, ToState=None, AccountSid=None, 
+               Body=None, MessageSid=None, SmsStatus=None, SmsMessageSid=None, NumMedia=None, SmsSid=None):
         debug("debugEnable", "phone", "SMS from", From, "to", To)
         logMsg = "text,"+From+","+To+","
         try:
