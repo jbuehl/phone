@@ -152,7 +152,9 @@ class WebRoot(object):
             for number in phoneData[To]["whitelist"][From][2]:
                 logMsg += number+"|"
             logMsg = logMsg.rstrip("|")
-            response = self.env.get_template("accept.html").render(trusted=From in trustedNumbers,
+            response = self.env.get_template("accept.html").render(recordingVoice=phoneData[To]["recordingVoice"],
+                                                        recordingLanguage=phoneData[To]["recordingLanguage"],
+                                                        trusted=From in trustedNumbers,
                                                         timeout=timeout,
                                                         numbers=phoneData[To]["whitelist"][From][2])
         elif From in phoneData[To]["blacklist"].keys():
@@ -176,7 +178,8 @@ class WebRoot(object):
                Digits="", msg=""):
         logMsg = "getNumber,"+From+","+To
         cherrypy.response.headers['Content-Type'] = "text/xml"
-        response = self.env.get_template("getNumber.html").render()            
+        response = self.env.get_template("getNumber.html").render(recordingVoice=phoneData[To]["recordingVoice"],
+                                                    recordingLanguage=phoneData[To]["recordingLanguage"])            
         log(logMsg)
         return response
         
@@ -190,7 +193,9 @@ class WebRoot(object):
         number = e164number(Digits)
         logMsg = "forward,"+From+","+number
         cherrypy.response.headers['Content-Type'] = "text/xml"
-        response = self.env.get_template("forward.html").render(number=number, callerId=To)            
+        response = self.env.get_template("forward.html").render(recordingVoice=phoneData[To]["recordingVoice"],
+                                                    recordingLanguage=phoneData[To]["recordingLanguage"],
+                                                    number=number, callerId=To)            
         log(logMsg)
         return response
         

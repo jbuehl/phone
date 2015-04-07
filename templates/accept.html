@@ -2,7 +2,7 @@
 <Response>
     {% if trusted %}
     <Gather numDigits='1' timeout='5' action='getNumber' method='GET'>
-        <Say voice='alice' language='en-GB'>Press the star key to make a call using this number.</Say>
+        <Say voice='{{ recordingVoice }}' language='{{ recordingLanguage }}'>Press the star key to make a call using this number.</Say>
     </Gather>
     {% endif %}
     <Dial timeout='{{ timeout }}' action='record' method='GET'>
