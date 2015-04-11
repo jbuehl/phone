@@ -135,6 +135,8 @@ class WebRoot(object):
                                 number=displayNumber(number), 
                                 white=whiteDisp,
                                 black=blackDisp,
+                                unknownMessage=phoneData[number]["unknownMessage"],
+                                whitelistMessage=phoneData[number]["whitelistMessage"],
                                 log=logDisp)
             title = ""
         return response

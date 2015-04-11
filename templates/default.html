@@ -9,9 +9,31 @@
 <body>
     <h1>{{ title }}</h1>
     <br>
+    <h2>Call log for {{ number }}</h2>
+    <table border=0 width=1280 style='table-layout:fixed'>
+        <tr>
+            <th><div class=heading>Time</div></th>
+            <th><div class=heading>Type</div></th>
+            <th><div class=heading>From</div></th>
+            <th><div class=heading>Result</div></th>
+        </tr>
+        {% for l in log %}
+        <tr>
+            <td><div class=label>{{ l[0] }}</div></td>
+            <td><div class=label>{{ l[1] }}</div></td>
+            <td><div class=label>{{ l[2] }}</div></td>
+            <td><div class=label>{{ l[3] }}</div></td>
+            <td><div class=label>
+            {% for f in l[4] %}
+                <span class=label>{{ f }}</span>
+            {% endfor %}
+            </div></td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
     <h2>Whitelist for {{ number }}</h2>
-    <table border=0 width=1320 style='table-layout:fixed'>
-        <col width=10><col width=20><col width=10><col width=80>
+    <table border=0 width=640 style='table-layout:fixed'>
         <tr>
             <th><div class=heading>Number</div></th>
             <th><div class=heading>Who</div></th>
@@ -33,8 +55,7 @@
     </table>
     <br>
     <h2>Blacklist for {{ number }}</h2>
-    <table border=0 width=1320 style='table-layout:fixed'>
-        <col width=10><col width=20><col width=10><col width=80>
+    <table border=0 width=480 style='table-layout:fixed'>
         <tr>
             <th><div class=heading>Number</div></th>
             <th><div class=heading>Who</div></th>
@@ -47,29 +68,11 @@
         {% endfor %}
     </table>
     <br>
-    <h2>Call log for {{ number }}</h2>
-    <table border=0 width=1320 style='table-layout:fixed'>
-        <col width=24><col width=10><col width=16><col width=10><col width=80>
-        <tr>
-            <th><div class=heading>Time</div></th>
-            <th><div class=heading>Type</div></th>
-            <th><div class=heading>From</div></th>
-            <th><div class=heading>Result</div></th>
-        </tr>
-        {% for l in log %}
-        <tr>
-            <td><div class=label>{{ l[0] }}</div></td>
-            <td><div class=label>{{ l[1] }}</div></td>
-            <td><div class=label>{{ l[2] }}</div></td>
-            <td><div class=label>{{ l[3] }}</div></td>
-            <td><div class=label>
-            {% for f in l[4] %}
-                <span class=label>{{ f }}</span>
-            {% endfor %}
-            </div></td>
-        </tr>
-        {% endfor %}
-    </table>
+    <h2>Whitelist caller message</h2>
+    <div class='label'>{{ whitelistMessage }}</div>
+    <br>
+    <h2>Unknown caller message</h2>
+    <div class='label'>{{ unknownMessage }}</div>
 </body>
 </html>
 
