@@ -10,7 +10,7 @@
     <h1>{{ title }}</h1>
     <br>
     <h2>Call log for {{ number }}</h2>
-    <table border=0 width=1280 style='table-layout:fixed'>
+    <table border=0 width=1024 style='table-layout:fixed'>
         <tr>
             <th><div class=heading>Time</div></th>
             <th><div class=heading>Type</div></th>
@@ -19,13 +19,13 @@
         </tr>
         {% for l in log %}
         <tr>
-            <td><div class=label>{{ l[0] }}</div></td>
-            <td><div class=label>{{ l[1] }}</div></td>
-            <td><div class=label>{{ l[2] }}</div></td>
-            <td><div class=label>{{ l[3] }}</div></td>
-            <td><div class=label>
+            <td><div class={{ l[3] }}>{{ l[0] }}</div></td>
+            <td><div class={{ l[3] }}>{{ l[1] }}</div></td>
+            <td><div class={{ l[3] }}>{{ l[2] }}</div></td>
+            <td><div class={{ l[3] }}>{{ l[3] }}</div></td>
+            <td><div class={{ l[3] }}>
             {% for f in l[4] %}
-                <span class=label>{{ f }}</span>
+                <span class={{ l[3] }}>{{ f }}</span>
             {% endfor %}
             </div></td>
         </tr>
@@ -33,7 +33,7 @@
     </table>
     <br>
     <h2>Whitelist for {{ number }}</h2>
-    <table border=0 width=640 style='table-layout:fixed'>
+    <table border=0 width=480 style='table-layout:fixed'>
         <tr>
             <th><div class=heading>Number</div></th>
             <th><div class=heading>Who</div></th>

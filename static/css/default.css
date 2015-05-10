@@ -4,9 +4,9 @@ body {
 
 * {
 	color: LightGray;
-	font-size: 16px;
+	font-size: 12px;
 	font-weight: normal;
-	font-family: "Helvetica", Helvetica, sans-serif;
+	font-family: "Courier New", Courier, monospace;
 	text-align: left;
 	text-indent: 0px;
 	padding: 2 2 2 2;
@@ -16,6 +16,7 @@ body {
 h1 {
 	color: OrangeRed;
 	font-size: 32px;
+	font-family: "Helvetica", Helvetica, sans-serif;
     text-align: left;
     font-weight: bold;
     }
@@ -23,6 +24,7 @@ h1 {
 h2 {
 	color: Orange;
 	font-size: 20px;
+	font-family: "Helvetica", Helvetica, sans-serif;
     text-align: left;
     font-weight: bold;
     }
@@ -58,7 +60,24 @@ td {
     }
 
 .label {
-	font-family: "Courier New", Courier, monospace;
+    text-align: left;
+    margin-right: 8px;
+    }
+
+.rejected {
+	color: OrangeRed;
+    text-align: left;
+    margin-right: 8px;
+    }
+
+.unknown {
+	color: Gold;
+    text-align: left;
+    margin-right: 8px;
+    }
+
+.forwarded {
+	color: Lime;
     text-align: left;
     margin-right: 8px;
     }
@@ -70,7 +89,7 @@ td {
 
 .heading {
     color: LightYellow;
-    font-size: 16px;
+    font-size: 12px;
     font-weight: bold;
 	font-family: "Courier New", Courier, monospace;
     text-align: left;

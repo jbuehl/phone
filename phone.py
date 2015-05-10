@@ -236,7 +236,7 @@ class WebRoot(object):
         
         # send the notification if it is longer than the minimum time
         if int(RecordingDuration) > minRecording:
-            debug("debugEnable", "phone", "sending notification")
+            debug("debugEnable", "phone", "sending notification to", str(phoneData[To]["notifyNumbers"]))
             # send the email announcing the voicemail
             subject = "New voicemail from "+displayNumber(Caller)
             message  = "You have a new voicemail from "+displayNumber(Caller)+"\n"
