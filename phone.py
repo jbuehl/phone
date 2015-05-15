@@ -149,7 +149,10 @@ class WebRoot(object):
                CalledZip="", CallerZip="", CallSid="", ToCountry="", ToState="", ForwardedFrom="", CalledVia=""):
         logMsg = "incoming,"+From+","+To
         cherrypy.response.headers['Content-Type'] = "text/xml"
-        if From in phoneData[To]["whitelist"].keys():
+        if From in phoneData[To]["blacklist"].keys():
+            logMsg += ",rejected"
+            response = self.env.get_template("reject.html").render()
+        elif From in phoneData[To]["whitelist"].keys():
             logMsg += ",forwarded,"
             for number in phoneData[To]["whitelist"][From][2]:
                 logMsg += number+"|"
@@ -159,9 +162,6 @@ class WebRoot(object):
                                                         trusted=From in trustedNumbers,
                                                         timeout=timeout,
                                                         numbers=phoneData[To]["whitelist"][From][2])
-        elif From in phoneData[To]["blacklist"].keys():
-            logMsg += ",rejected"
-            response = self.env.get_template("reject.html").render()
         else:
             logMsg += ",unknown"
             response = self.env.get_template("record.html").render(recordingVoice=phoneData[To]["recordingVoice"],
