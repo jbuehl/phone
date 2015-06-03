@@ -7,6 +7,7 @@ import syslog
 import time
 import json
 import smtplib
+import requests
 from email.mime.text import MIMEText
 from twilio.rest import TwilioRestClient
 from jinja2 import Environment, FileSystemLoader
@@ -129,7 +130,7 @@ class WebRoot(object):
                 while len(logLine) < 6:
                     logLine += [""]
                 if logLine[3] == number:
-                    logDisp += [[logLine[0], logLine[1], displayNumber(logLine[2]), logLine[4], [displayNumber(f) for f in logLine[5].split("|")]]]
+                    logDisp += [[logLine[0], logLine[1], displayNumber(logLine[2]), logLine[4], [f for f in logLine[5].split("|")]]]
             # build the web page
             response += self.env.get_template("default.html").render(title=title, script="",
                                 number=displayNumber(number), 
@@ -155,7 +156,7 @@ class WebRoot(object):
         elif From in phoneData[To]["whitelist"].keys():
             logMsg += ",forwarded,"
             for number in phoneData[To]["whitelist"][From][2]:
-                logMsg += number+"|"
+                logMsg += displayNumber(number)+"|"
             logMsg = logMsg.rstrip("|")
             response = self.env.get_template("accept.html").render(recordingVoice=phoneData[To]["recordingVoice"],
                                                         recordingLanguage=phoneData[To]["recordingLanguage"],
@@ -288,6 +289,43 @@ class WebRoot(object):
             debug("debugEnable", "phone", To, "not in SMS forwrding list")
             logMsg += "unknown"
         log(logMsg)
+        
+    # HA command  
+    @cherrypy.expose
+    def cmd(self, From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", FromState="", 
+               ToZip="", FromCountry="", ToCountry="", ToState="", AccountSid="", 
+               Body="", MessageSid="", SmsStatus="", SmsMessageSid="", NumMedia="", SmsSid=""):
+        debug("debugEnable", "phone", "SMS from", From, "to", To)
+        logMsg = "text,"+From+","+To
+        response = ""
+        if From in trustedNumbers:
+            try:
+                url = "http://localhost/cmd?"
+                cmdLine = Body.split(" ")
+                url += "resource="+cmdLine[0]
+                try:
+                    url += "&state="+cmdLine[1]
+                except:
+                    pass
+                debug("debugEnable", "phone", url)
+                reply = requests.get(url)
+                debug("debugEnable", "phone", reply.text)
+                cherrypy.response.headers['Content-Type'] = "text/xml"
+                response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
+                response += "<Response>\n"
+                response += "   <Message to='"+From+"'>\n"
+                response += "       "+reply.text+"\n"
+                response += "   </Message>\n"
+                response += "</Response>\n"
+                logMsg += ",accepted"
+            except:
+                debug("debugEnable", "phone", "error")
+                logMsg += ",error"
+        else:
+            logMsg += ",rejected"
+        logMsg += ","+Body
+        log(logMsg)
+        return response
         
 if __name__ == "__main__":
     # set up the web server
