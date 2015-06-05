@@ -275,20 +275,18 @@ class WebRoot(object):
         logMsg = "text,"+From+","+To+","
         try:
             Forward = smsForward[To]
-            logMsg += Forward
-            debug("debugEnable", "phone", "forwarding to", Forward)
-            cherrypy.response.headers['Content-Type'] = "text/xml"
-            response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
-            response += "<Response>\n"
-            response += "   <Message to='"+Forward+"'>\n"
-            response += "       From "+From+": "+Body+"\n"
-            response += "   </Message>\n"
-            response += "</Response>\n"
-            return response
         except:
-            debug("debugEnable", "phone", To, "not in SMS forwrding list")
-            logMsg += "unknown"
+            debug("debugEnable", "phone", To, "not in SMS forwarding list")
+            logMsg += "error,not in SMS forwarding list"
+            return
+        debug("debugEnable", "phone", "forwarding to", Forward)
+        cherrypy.response.headers['Content-Type'] = "text/xml"
+        message = "From "+displayNumber(From)+": "+Body
+        response = self.env.get_template("message.html").render(to=Forward,
+                                                                    body=message)
+        logMsg += "forwarded,"+displayNumber(Forward)
         log(logMsg)
+        return response
         
     # HA command  
     @cherrypy.expose
@@ -309,14 +307,12 @@ class WebRoot(object):
                     pass
                 debug("debugEnable", "phone", url)
                 reply = requests.get(url)
-                debug("debugEnable", "phone", reply.text)
+                debug("debugEnable", "phone", reply.json())
+                state = reply.json()["state"]
                 cherrypy.response.headers['Content-Type'] = "text/xml"
-                response  = "<?xml version='1.0' encoding='UTF-8'?>\n"
-                response += "<Response>\n"
-                response += "   <Message to='"+From+"'>\n"
-                response += "       "+reply.text+"\n"
-                response += "   </Message>\n"
-                response += "</Response>\n"
+                response = self.env.get_template("message.html").render(to=From,
+                                                                                body=state,
+                                                                                media="")
                 logMsg += ",accepted"
             except:
                 debug("debugEnable", "phone", "error")
