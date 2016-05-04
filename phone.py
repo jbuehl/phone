@@ -144,10 +144,7 @@ class WebRoot(object):
 
     # Answer an incoming call    
     @cherrypy.expose
-    def answer(self, From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", CalledState="", FromState="", 
-               Direction="", CallStatus="", ToZip="", CallerCity="", FromCountry="", CalledCity="", 
-               CalledCountry="", Caller="", CallerState="", AccountSid="", Called="", CallerCountry="", 
-               CalledZip="", CallerZip="", CallSid="", ToCountry="", ToState="", ForwardedFrom="", CalledVia=""):
+    def answer(self, From, To, **params):
         logMsg = "incoming,"+From+","+To
         cherrypy.response.headers['Content-Type'] = "text/xml"
         if From in phoneData[To]["blacklist"].keys():
@@ -174,11 +171,7 @@ class WebRoot(object):
 
     # Accept a phone number to be called   
     @cherrypy.expose
-    def getNumber(self, From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", CalledState="", FromState="", 
-               Direction="", CallStatus="", ToZip="", CallerCity="", FromCountry="", CalledCity="", 
-               CalledCountry="", Caller="", CallerState="", AccountSid="", Called="", CallerCountry="", 
-               CalledZip="", CallerZip="", CallSid="", ToCountry="", ToState="",
-               Digits="", msg=""):
+    def getNumber(self, From, To, **params):
         logMsg = "getNumber,"+From+","+To
         cherrypy.response.headers['Content-Type'] = "text/xml"
         response = self.env.get_template("getNumber.html").render(recordingVoice=phoneData[To]["recordingVoice"],
@@ -188,11 +181,12 @@ class WebRoot(object):
         
     # Accept a phone number to be called   
     @cherrypy.expose
-    def forward(self, From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", CalledState="", FromState="", 
-               Direction="", CallStatus="", ToZip="", CallerCity="", FromCountry="", CalledCity="", 
-               CalledCountry="", Caller="", CallerState="", AccountSid="", Called="", CallerCountry="", 
-               CalledZip="", CallerZip="", CallSid="", ToCountry="", ToState="",
-               Digits="", msg=""):
+    def forward(self, From, To, Digits="", **params):
+#               From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", CalledState="", FromState="", 
+#               Direction="", CallStatus="", ToZip="", CallerCity="", FromCountry="", CalledCity="", 
+#               CalledCountry="", Caller="", CallerState="", AccountSid="", Called="", CallerCountry="", 
+#               CalledZip="", CallerZip="", CallSid="", ToCountry="", ToState="",
+#               Digits="", msg=""):
         number = e164number(Digits)
         logMsg = "forward,"+From+","+number
         cherrypy.response.headers['Content-Type'] = "text/xml"
@@ -204,11 +198,12 @@ class WebRoot(object):
         
     # Record a voicemail from a whitelisted number    
     @cherrypy.expose
-    def record(self, From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", CalledState="", FromState="", 
-               Direction="", CallStatus="", ToZip="", CallerCity="", FromCountry="", CalledCity="", 
-               CalledCountry="", Caller="", CallerState="", AccountSid="", Called="", CallerCountry="", 
-               CalledZip="", CallerZip="", CallSid="", ToCountry="", ToState="",
-               DialCallSid="", DialCallStatus=""):
+    def record(self, From, To, **params):
+#               From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", CalledState="", FromState="", 
+#               Direction="", CallStatus="", ToZip="", CallerCity="", FromCountry="", CalledCity="", 
+#               CalledCountry="", Caller="", CallerState="", AccountSid="", Called="", CallerCountry="", 
+#               CalledZip="", CallerZip="", CallSid="", ToCountry="", ToState="",
+#               DialCallSid="", DialCallStatus=""):
         logMsg = "recording,"+From+","+To
         cherrypy.response.headers['Content-Type'] = "text/xml"
         response = self.env.get_template("record.html").render(recordingVoice=phoneData[To]["recordingVoice"],
@@ -220,11 +215,12 @@ class WebRoot(object):
 
     # Save a recorded voicemail   
     @cherrypy.expose
-    def save(self, From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", CalledState="", FromState="", 
-               Direction="", CallStatus="", ToZip="", CallerCity="", FromCountry="", CalledCity="", 
-               CalledCountry="", Caller="", CallerState="", AccountSid="", Called="", CallerCountry="", 
-               CalledZip="", CallerZip="", CallSid="", ToCountry="", ToState="",
-               RecordingUrl="", RecordingDuration="", RecordingSid="", Digits=""):
+    def save(self, From, To, RecordingUrl="", RecordingDuration="", **params):
+#               From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", CalledState="", FromState="", 
+#               Direction="", CallStatus="", ToZip="", CallerCity="", FromCountry="", CalledCity="", 
+#               CalledCountry="", Caller="", CallerState="", AccountSid="", Called="", CallerCountry="", 
+#               CalledZip="", CallerZip="", CallSid="", ToCountry="", ToState="",
+#               RecordingUrl="", RecordingDuration="", RecordingSid="", Digits=""):
         logMsg = "recorded,"+From+","+To+","+str(RecordingDuration)+" secs"
         
         # copy the file from Twilio's server
@@ -268,9 +264,10 @@ class WebRoot(object):
                 
     # SMS message forwarding  
     @cherrypy.expose
-    def sms(self, From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", FromState="", 
-               ToZip="", FromCountry="", ToCountry="", ToState="", AccountSid="", 
-               Body="", MessageSid="", SmsStatus="", SmsMessageSid="", NumMedia="", SmsSid=""):
+    def sms(self, From, To, Body="", **params):
+#               From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", FromState="", 
+#               ToZip="", FromCountry="", ToCountry="", ToState="", AccountSid="", 
+#               Body="", MessageSid="", SmsStatus="", SmsMessageSid="", NumMedia="", SmsSid=""):
         debug("debugEnable", "phone", "SMS from", From, "to", To)
         logMsg = "text,"+From+","+To+","
         try:
@@ -283,16 +280,14 @@ class WebRoot(object):
         cherrypy.response.headers['Content-Type'] = "text/xml"
         message = "From "+displayNumber(From)+": "+Body
         response = self.env.get_template("message.html").render(to=Forward,
-                                                                    body=message)
+                                                                body=message)
         logMsg += "forwarded,"+displayNumber(Forward)
         log(logMsg)
         return response
         
     # HA command  
     @cherrypy.expose
-    def cmd(self, From="", FromZip="", FromCity="", ApiVersion="", To="", ToCity="", FromState="", 
-               ToZip="", FromCountry="", ToCountry="", ToState="", AccountSid="", 
-               Body="", MessageSid="", SmsStatus="", SmsMessageSid="", NumMedia="", SmsSid=""):
+    def cmd(self, From, To, Body="", **params):
         debug("debugEnable", "phone", "SMS from", From, "to", To)
         logMsg = "text,"+From+","+To
         response = ""
@@ -311,8 +306,8 @@ class WebRoot(object):
                 state = reply.json()["state"]
                 cherrypy.response.headers['Content-Type'] = "text/xml"
                 response = self.env.get_template("message.html").render(to=From,
-                                                                                body=state,
-                                                                                media="")
+                                                                        body=state,
+                                                                        media="")
                 logMsg += ",accepted"
             except:
                 debug("debugEnable", "phone", "error")
