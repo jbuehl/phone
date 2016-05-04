@@ -64,6 +64,12 @@ td {
     margin-right: 8px;
     }
 
+.accepted {
+	color: RoyalBlue;
+    text-align: left;
+    margin-right: 8px;
+    }
+
 .rejected {
 	color: OrangeRed;
     text-align: left;

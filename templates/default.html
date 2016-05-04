@@ -42,17 +42,20 @@
         </tr>
         {% for w in white %}
         <tr>
-            <td><div class=label>{{ w[0] }}</div></td>
-            <td><div class=label>{{ w[1] }}</div></td>
-            <td><div class=label>{{ w[2] }}</div></td>
-            <td><div class=label>
+            <td><div class=forwarded>{{ w[0] }}</div></td>
+            <td><div class=forwarded>{{ w[1] }}</div></td>
+            <td><div class=forwarded>{{ w[2] }}</div></td>
+            <td><div class=forwarded>
             {% for f in w[3] %}
-                <span class=label>{{ f }}</span>
+                <span class=forwarded>{{ f }}</span>
             {% endfor %}
             </div></td>
         </tr>
         {% endfor %}
     </table>
+    <br>
+    <h2>Whitelist caller message</h2>
+    <div class='forwarded'>{{ whitelistMessage }}</div>
     <br>
     <h2>Blacklist for {{ number }}</h2>
     <table border=0 width=480 style='table-layout:fixed'>
@@ -62,17 +65,14 @@
         </tr>
         {% for b in black %}
         <tr>
-            <td><div class=label>{{ b[0] }}</div></td>
-            <td><div class=label>{{ b[1] }}</div></td>
+            <td><div class=rejected>{{ b[0] }}</div></td>
+            <td><div class=rejected>{{ b[1] }}</div></td>
         </tr>
         {% endfor %}
     </table>
     <br>
-    <h2>Whitelist caller message</h2>
-    <div class='label'>{{ whitelistMessage }}</div>
-    <br>
     <h2>Unknown caller message</h2>
-    <div class='label'>{{ unknownMessage }}</div>
+    <div class='rejected'>{{ unknownMessage }}</div>
 </body>
 </html>
 
